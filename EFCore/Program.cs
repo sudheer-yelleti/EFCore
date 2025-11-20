@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using EFCore.DBContext;
+using EFCore.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,6 +16,8 @@ builder.Services.AddOpenApi();
              .LogTo(Console.WriteLine, LogLevel.Information)
              );
     builder.Services.AddControllers();
+    builder.Services.AddEndpointsApiExplorer();
+    builder.Services.AddSingleton<ExceptionHandlingMiddleware>();
 
 var app = builder.Build();
 
@@ -26,6 +29,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.MapControllers();
+app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 
 var summaries = new[]
