@@ -1,0 +1,15 @@
+# Ignore build outputs anywhere in the repo
+**/bin/
+**/obj/
+**/Debug/
+**/Release/
+
+
+# SQLite temp files
+*.db-shm
+*.db-wal
+*.db-journal
+
+# Rider / VSCode / DotNet tools
+.idea/
+.vscode/
