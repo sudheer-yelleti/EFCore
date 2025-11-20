@@ -1,28 +1,28 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.EntityFrameworkCore;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using EFCore.DBContext;
+using EFCore.Entities;
+
+namespace EFCore.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 public class StudentController : ControllerBase
 {
-    private readonly StudentDBContext _context;
+    private readonly StudentDbContext _context;
 
-    public StudentController(StudentDBContext context)
+    public StudentController(StudentDbContext context)
     {
         _context = context;
     }
 
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<Student>>> GetStudents()
+    public async Task<ActionResult<IEnumerable<Student>>> GetStudentsAsync()
     {
         return await _context.Students.AsNoTracking().ToListAsync();
     }
 
-    [HttpGet("{id}")]
-    public async Task<ActionResult<Student>> GetStudent(int id)
+    [HttpGet("{id}", Name = "GetStudentAsync")]
+    public async Task<ActionResult<Student>> GetStudentAsync(int id)
     {
         var student = await _context.Students.FindAsync(id);
 
@@ -35,23 +35,39 @@ public class StudentController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<Student>> PostStudent(Student student)
+    public async Task<ActionResult<Student>> PostStudentAsync([FromBody]Student student)
     {
-        _context.Students.Add(student);
-        await _context.SaveChangesAsync();
+        
+        await using (var transaction = await _context.Database.BeginTransactionAsync())
+        {
+            try
+            {
+                _context.Students.Add(student);
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+                
+            }
+            catch (Exception)
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
+        }
 
-        return CreatedAtAction(nameof(GetStudent), new { id = student.StudentId }, student);
+        return CreatedAtRoute(nameof(GetStudentAsync), new { id = student.StudentId }, student);
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> PutStudent(int id, Student student)
+    public async Task<IActionResult> PutStudentAsync(int id, [FromBody] Student student)
     {
         if (id != student.StudentId)
         {
             return BadRequest();
         }
 
-        _context.Entry(student).State = EntityState.Modified;
+        var existingStudent = await _context.Students.FindAsync(id);
+        if (existingStudent == null) return NotFound();
+        existingStudent.StudentName = student.StudentName;
 
         try
         {
@@ -73,7 +89,7 @@ public class StudentController : ControllerBase
     }
 
     [HttpDelete("{id}")]
-    public async Task<IActionResult> DeleteStudent(int id)
+    public async Task<IActionResult> DeleteStudentAsync(int id)
     {
         var student = await _context.Students.FindAsync(id);
         if (student == null)
@@ -88,7 +104,7 @@ public class StudentController : ControllerBase
     }
 
     [HttpPatch("{id}")]
-    public async Task<IActionResult> PatchStudentSimple(int id, [FromBody] Student studentPatch)
+    public async Task<IActionResult> PatchStudentSimpleAsync(int id, [FromBody] Student studentPatch)
     {
         var student = await _context.Students.FindAsync(id);
         if (student == null) return NotFound();

@@ -3,12 +3,12 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-
+using EFCore.DBContext;
 #nullable disable
 
 namespace EFCore.Migrations
 {
-    [DbContext(typeof(StudentDBContext))]
+    [DbContext(typeof(StudentDbContext))]
     [Migration("20251120054707_InitialCreate")]
     partial class InitialCreate
     {

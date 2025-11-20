@@ -2,6 +2,7 @@
 using EFCore.DBContext;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -9,9 +10,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EFCore.Migrations
 {
     [DbContext(typeof(StudentDbContext))]
-    partial class StudentDBContextModelSnapshot : ModelSnapshot
+    [Migration("20251120154717_NewMigration1")]
+    partial class NewMigration1
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.0");
@@ -23,7 +26,6 @@ namespace EFCore.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("CourseName")
-                        .IsConcurrencyToken()
                         .IsRequired()
                         .HasColumnType("TEXT");
 
@@ -41,14 +43,9 @@ namespace EFCore.Migrations
                     b.Property<int>("CourseId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("StudentId")
-                        .HasColumnType("INTEGER");
-
                     b.HasKey("CourseEnrollmentId");
 
                     b.HasIndex("CourseId");
-
-                    b.HasIndex("StudentId");
 
                     b.ToTable("CourseEnrollments");
                 });
@@ -59,15 +56,16 @@ namespace EFCore.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
+                    b.Property<int?>("CourseEnrollmentId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("StudentName")
-                        .IsConcurrencyToken()
                         .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.HasKey("StudentId");
 
-                    b.HasIndex("StudentName")
-                        .IsUnique();
+                    b.HasIndex("CourseEnrollmentId");
 
                     b.ToTable("Students");
                 });
@@ -80,15 +78,19 @@ namespace EFCore.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("EFCore.Entities.Student", "Student")
-                        .WithMany()
-                        .HasForeignKey("StudentId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.Navigation("Course");
+                });
 
-                    b.Navigation("Student");
+            modelBuilder.Entity("EFCore.Entities.Student", b =>
+                {
+                    b.HasOne("EFCore.Entities.CourseEnrollment", null)
+                        .WithMany("Students")
+                        .HasForeignKey("CourseEnrollmentId");
+                });
+
+            modelBuilder.Entity("EFCore.Entities.CourseEnrollment", b =>
+                {
+                    b.Navigation("Students");
                 });
 #pragma warning restore 612, 618
         }

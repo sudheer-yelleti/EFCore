@@ -2,6 +2,7 @@
 using EFCore.DBContext;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -9,9 +10,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EFCore.Migrations
 {
     [DbContext(typeof(StudentDbContext))]
-    partial class StudentDBContextModelSnapshot : ModelSnapshot
+    [Migration("20251120182534_NewMigration3")]
+    partial class NewMigration3
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.0");
@@ -65,9 +68,6 @@ namespace EFCore.Migrations
                         .HasColumnType("TEXT");
 
                     b.HasKey("StudentId");
-
-                    b.HasIndex("StudentName")
-                        .IsUnique();
 
                     b.ToTable("Students");
                 });

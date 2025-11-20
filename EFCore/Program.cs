@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using EFCore.DBContext;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -6,7 +7,7 @@ var builder = WebApplication.CreateBuilder(args);
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
     // In Program.cs
-    builder.Services.AddDbContext<StudentDBContext>(options =>
+    builder.Services.AddDbContext<StudentDbContext>(options =>
         //options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
         // Or for SQLite:
              options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection"))

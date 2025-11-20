@@ -13,3 +13,4 @@
 # Rider / VSCode / DotNet tools
 .idea/
 .vscode/
+**/*.db
