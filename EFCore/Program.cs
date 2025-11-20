@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using EFCore.DBContext;
 using EFCore.Middleware;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Versioning;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,6 +17,19 @@ builder.Services.AddOpenApi();
              .EnableSensitiveDataLogging()
              .LogTo(Console.WriteLine, LogLevel.Information)
              );
+    // In Program.cs
+    builder.Services.AddApiVersioning(options =>
+    {
+        options.DefaultApiVersion = new ApiVersion(1, 0); // Set a default version
+        options.AssumeDefaultVersionWhenUnspecified = true; // Use default if no version is provided
+        options.ReportApiVersions = true; // Include supported versions in response headers
+        // Configure how the API version is read from the request (e.g., URL segment)
+        options.ApiVersionReader = ApiVersionReader.Combine(
+            new UrlSegmentApiVersionReader(),
+            new QueryStringApiVersionReader("api-version"),
+            new HeaderApiVersionReader("X-Api-Version"));
+    });
+    builder.Services.AddCors();
     builder.Services.AddControllers();
     builder.Services.AddEndpointsApiExplorer();
     builder.Services.AddSingleton<ExceptionHandlingMiddleware>();
@@ -30,6 +45,8 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.MapControllers();
 app.UseMiddleware<ExceptionHandlingMiddleware>();
+app.UseHttpsRedirection();
+app.UseHsts();
 
 
 var summaries = new[]

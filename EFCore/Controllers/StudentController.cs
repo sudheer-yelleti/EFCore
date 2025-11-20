@@ -4,8 +4,9 @@ using EFCore.DBContext;
 using EFCore.Entities;
 
 namespace EFCore.Controllers;
+[ApiVersion("1.0")]
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/v{version:apiVersion}/[controller]")]
 public class StudentController : ControllerBase
 {
     private readonly StudentDbContext _context;
@@ -16,12 +17,14 @@ public class StudentController : ControllerBase
     }
 
     [HttpGet]
+    [MapToApiVersion("1.0")]
     public async Task<ActionResult<IEnumerable<Student>>> GetStudentsAsync()
     {
         return await _context.Students.AsNoTracking().ToListAsync();
     }
 
     [HttpGet("{id}", Name = "GetStudentAsync")]
+    [MapToApiVersion("1.0")]
     public async Task<ActionResult<Student>> GetStudentAsync(int id)
     {
         var student = await _context.Students.FindAsync(id);
@@ -35,6 +38,7 @@ public class StudentController : ControllerBase
     }
 
     [HttpPost]
+    [MapToApiVersion("1.0")]
     public async Task<ActionResult<Student>> PostStudentAsync([FromBody]Student student)
     {
         
@@ -58,6 +62,7 @@ public class StudentController : ControllerBase
     }
 
     [HttpPut("{id}")]
+    [MapToApiVersion("1.0")]
     public async Task<IActionResult> PutStudentAsync(int id, [FromBody] Student student)
     {
         if (id != student.StudentId)
@@ -89,6 +94,7 @@ public class StudentController : ControllerBase
     }
 
     [HttpDelete("{id}")]
+    [MapToApiVersion("1.0")]
     public async Task<IActionResult> DeleteStudentAsync(int id)
     {
         var student = await _context.Students.FindAsync(id);
@@ -104,6 +110,7 @@ public class StudentController : ControllerBase
     }
 
     [HttpPatch("{id}")]
+    [MapToApiVersion("1.0")]
     public async Task<IActionResult> PatchStudentSimpleAsync(int id, [FromBody] Student studentPatch)
     {
         var student = await _context.Students.FindAsync(id);
