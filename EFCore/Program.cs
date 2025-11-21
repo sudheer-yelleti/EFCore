@@ -4,6 +4,7 @@ using EFCore.DBContext;
 using EFCore.Middleware;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Versioning;
+using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,12 +13,36 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddOpenApi();
     // In Program.cs
     builder.Services.AddDbContext<StudentDbContext>(options =>
+    {
         //options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
         // Or for SQLite:
-             options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection"))
-             .EnableSensitiveDataLogging()
-             .LogTo(Console.WriteLine, LogLevel.Information)
-             );
+        options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection"))
+            .LogTo(Console.WriteLine, LogLevel.Information);
+
+        if (builder.Environment.IsDevelopment())
+        {
+            options.EnableSensitiveDataLogging();
+        }
+    });
+    builder.Services.AddAuthentication()
+        .AddJwtBearer(options =>
+        {
+            options.Authority = "https://login.microsoftonline.com/d1977dc2-66b5-4d78-ba80-11aa9bc03829/v2.0";
+            //options.RequireHttpsMetadata = false;
+            options.Audience = "315c42e7-d68c-44f3-a64a-86c01d60011c";
+            options.TokenValidationParameters = new TokenValidationParameters
+            {
+                ValidIssuers = new[]
+                {
+                    "https://sts.windows.net/d1977dc2-66b5-4d78-ba80-11aa9bc03829/",
+                    "https://login.microsoftonline.com/d1977dc2-66b5-4d78-ba80-11aa9bc03829/v2.0"
+                }
+            };
+
+        });
+    builder.Services.AddAuthorizationBuilder();
+   
+
     // In Program.cs
     builder.Services.AddApiVersioning(options =>
     {
@@ -60,7 +85,6 @@ app.UseRateLimiter();
 app.UseHttpsRedirection();
 app.MapControllers();
 app.UseMiddleware<ExceptionHandlingMiddleware>();
-app.UseHttpsRedirection();
 app.UseHsts();
 
 

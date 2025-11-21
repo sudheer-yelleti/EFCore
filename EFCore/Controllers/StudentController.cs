@@ -2,8 +2,11 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using EFCore.DBContext;
 using EFCore.Entities;
+using Microsoft.AspNetCore.Authorization;
 
 namespace EFCore.Controllers;
+
+[Authorize]
 [ApiVersion("1.0")]
 [ApiController]
 [Route("api/v{version:apiVersion}/[controller]")]
