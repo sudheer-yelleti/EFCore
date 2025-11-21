@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc.Versioning;
 using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
-
+var configuration = builder.Configuration;
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
@@ -16,7 +16,7 @@ builder.Services.AddOpenApi();
     {
         //options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
         // Or for SQLite:
-        options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection"))
+        options.UseSqlite(configuration.GetConnectionString("DefaultConnection"))
             .LogTo(Console.WriteLine, LogLevel.Information);
 
         if (builder.Environment.IsDevelopment())
@@ -24,19 +24,15 @@ builder.Services.AddOpenApi();
             options.EnableSensitiveDataLogging();
         }
     });
+    
     builder.Services.AddAuthentication()
         .AddJwtBearer(options =>
         {
-            options.Authority = "https://login.microsoftonline.com/d1977dc2-66b5-4d78-ba80-11aa9bc03829/v2.0";
-            //options.RequireHttpsMetadata = false;
-            options.Audience = "315c42e7-d68c-44f3-a64a-86c01d60011c";
+            options.Authority = configuration["AuthorityUrl"];
+            options.Audience = configuration["Audience"];
             options.TokenValidationParameters = new TokenValidationParameters
             {
-                ValidIssuers = new[]
-                {
-                    "https://sts.windows.net/d1977dc2-66b5-4d78-ba80-11aa9bc03829/",
-                    "https://login.microsoftonline.com/d1977dc2-66b5-4d78-ba80-11aa9bc03829/v2.0"
-                }
+                ValidIssuers = configuration.GetSection("TrustedTokenProviders").Get<string[]>(),
             };
 
         });
@@ -80,6 +76,12 @@ if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 }
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<StudentDbContext>();
+    db.Database.Migrate();
+}
+
 
 app.UseRateLimiter();
 app.UseHttpsRedirection();

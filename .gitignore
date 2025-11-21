@@ -15,3 +15,5 @@
 .vscode/
 **/*.db
 EFCore/mydb.db
+EFCore.sln.DotSettings.user
+EFCore/db.mydb
