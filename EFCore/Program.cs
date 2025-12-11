@@ -5,6 +5,7 @@ using EFCore.Middleware;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Versioning;
 using Microsoft.IdentityModel.Tokens;
+using StackExchange.Redis;
 
 var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration;
@@ -68,6 +69,15 @@ builder.Services.AddOpenApi();
     builder.Services.AddControllers();
     builder.Services.AddEndpointsApiExplorer();
     builder.Services.AddSingleton<ExceptionHandlingMiddleware>();
+    builder.Services.AddStackExchangeRedisCache(options =>
+    {
+        options.Configuration = configuration["Redis"];
+        options.ConfigurationOptions = new ConfigurationOptions()
+        {
+            AbortOnConnectFail = true,
+            EndPoints = { options.Configuration }
+        };
+    });
 
 var app = builder.Build();
 

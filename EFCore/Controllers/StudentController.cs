@@ -2,7 +2,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using EFCore.DBContext;
 using EFCore.Entities;
+using EFCore.Extensions;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.Extensions.Caching.Distributed;
 
 namespace EFCore.Controllers;
 
@@ -10,27 +12,30 @@ namespace EFCore.Controllers;
 [ApiVersion("1.0")]
 [ApiController]
 [Route("api/v{version:apiVersion}/[controller]")]
-public class StudentController : ControllerBase
+public class StudentController(StudentDbContext context, IDistributedCache cache, ILogger<StudentController> logger)
+    : ControllerBase
 {
-    private readonly StudentDbContext _context;
-
-    public StudentController(StudentDbContext context)
-    {
-        _context = context;
-    }
-
     [HttpGet]
     [MapToApiVersion("1.0")]
     public async Task<ActionResult<IEnumerable<Student>>> GetStudentsAsync()
     {
-        return await _context.Students.AsNoTracking().ToListAsync();
+        var cacheKey = "students";
+        logger.LogInformation("Getting students from cache");
+        var students = await cache.GetOrSetAsync(cacheKey,
+            async () =>
+            {
+                logger.LogInformation("Cache Miss. Getting students from database");
+                return await context.Students.AsNoTracking().ToListAsync();
+            });
+        // return await _context.Students.AsNoTracking().ToListAsync();
+        return students;
     }
 
     [HttpGet("{id}", Name = "GetStudentAsync")]
     [MapToApiVersion("1.0")]
     public async Task<ActionResult<Student>> GetStudentAsync(int id)
     {
-        var student = await _context.Students.FindAsync(id);
+        var student = await context.Students.FindAsync(id);
 
         if (student == null)
         {
@@ -45,12 +50,12 @@ public class StudentController : ControllerBase
     public async Task<ActionResult<Student>> PostStudentAsync([FromBody]Student student)
     {
         
-        await using (var transaction = await _context.Database.BeginTransactionAsync())
+        await using (var transaction = await context.Database.BeginTransactionAsync())
         {
             try
             {
-                _context.Students.Add(student);
-                await _context.SaveChangesAsync();
+                context.Students.Add(student);
+                await context.SaveChangesAsync();
                 await transaction.CommitAsync();
                 
             }
@@ -73,13 +78,13 @@ public class StudentController : ControllerBase
             return BadRequest();
         }
 
-        var existingStudent = await _context.Students.FindAsync(id);
+        var existingStudent = await context.Students.FindAsync(id);
         if (existingStudent == null) return NotFound();
         existingStudent.StudentName = student.StudentName;
 
         try
         {
-            await _context.SaveChangesAsync();
+            await context.SaveChangesAsync();
         }
         catch (DbUpdateConcurrencyException)
         {
@@ -100,14 +105,14 @@ public class StudentController : ControllerBase
     [MapToApiVersion("1.0")]
     public async Task<IActionResult> DeleteStudentAsync(int id)
     {
-        var student = await _context.Students.FindAsync(id);
+        var student = await context.Students.FindAsync(id);
         if (student == null)
         {
             return NotFound();
         }
 
-        _context.Students.Remove(student);
-        await _context.SaveChangesAsync();
+        context.Students.Remove(student);
+        await context.SaveChangesAsync();
 
         return NoContent();
     }
@@ -116,14 +121,14 @@ public class StudentController : ControllerBase
     [MapToApiVersion("1.0")]
     public async Task<IActionResult> PatchStudentSimpleAsync(int id, [FromBody] Student studentPatch)
     {
-        var student = await _context.Students.FindAsync(id);
+        var student = await context.Students.FindAsync(id);
         if (student == null) return NotFound();
 
         // Update only provided fields
         if (!string.IsNullOrEmpty(studentPatch.StudentName))
             student.StudentName = studentPatch.StudentName;
 
-        await _context.SaveChangesAsync();
+        await context.SaveChangesAsync();
 
         return Ok(student);
     }
@@ -131,6 +136,6 @@ public class StudentController : ControllerBase
 
     private bool StudentExists(int id)
     {
-        return _context.Students.Any(e => e.StudentId == id);
+        return context.Students.Any(e => e.StudentId == id);
     }
 }
